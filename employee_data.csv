@@ -1,0 +1,11 @@
+rfid_id,employee_name,department,email
+1234567890,John Doe,Engineering,john.doe@example.com
+2345678901,Jane Smith,Marketing,jane.smith@example.com
+3456789012,Bob Johnson,Sales,bob.johnson@example.com
+4567890123,Alice Williams,Human Resources,alice.williams@example.com
+5678901234,Michael Brown,Finance,michael.brown@example.com
+6789012345,Linda Davis,IT,linda.davis@example.com
+7890123456,James Miller,Operations,james.miller@example.com
+8901234567,Patricia Wilson,Customer Service,patricia.wilson@example.com
+9012345678,Robert Moore,Legal,robert.moore@example.com
+0123456789,Mary Taylor,Research,mary.taylor@example.com
