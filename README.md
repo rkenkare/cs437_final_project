@@ -1,5 +1,4 @@
-# cs437_final_project
-Automated checkout system for corporate cafeterias
+# Automated checkout system for corporate cafeterias (cs437_final_project)
 
 ## 1. Executive summary
 In many large companies and factories, cafeterias are a key service that must be provided, offering
