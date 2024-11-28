@@ -1,1 +1,2 @@
 {'employee_id': '1234567890', 'employee_name': 'John Doe', 'items': ['Sandwich'], 'timestamp': '2024-11-27 14:58:53'}
+{'employee_id': '1234567890', 'employee_name': 'John Doe', 'items': ['Sandwich', 'Soda', 'Coffee'], 'timestamp': '2024-11-27 16:54:02'}

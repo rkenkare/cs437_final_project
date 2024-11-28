@@ -1,10 +1,9 @@
 import csv
 from datetime import datetime
 import os
-from tabulate import tabulate  # Added import statement
 
 def receive_rfid_data():
-    rfid_id = input("Enter RFID ID (simulated scan): ").strip()
+    rfid_id = input("Enter RFID ID (simulated scan, or '0000000000' to exit): ").strip()
     print(f"Received RFID ID: {rfid_id}")
     return rfid_id
 
@@ -17,15 +16,13 @@ def get_employee_data(rfid_id):
                 if row['rfid_id'] == rfid_id:
                     employee_data = row
                     break
-        if employee_data:
-            print(f"RFID: {employee_data['rfid_id']}")
-            print(f"Employee Name: {employee_data['employee_name']}")
-            print(f"Department: {employee_data['department']}")
-            print(f"Email: {employee_data['email']}")
-            print(f"Role: {employee_data['role']}")
-        else:
-            print(f"No employee found for RFID ID: {rfid_id}")
-        return employee_data
+            if employee_data:
+                print(f"RFID: {employee_data['rfid_id']}")
+                print(f"Employee Name: {employee_data['employee_name']}")
+                print(f"Department: {employee_data['department']}")
+            else:
+                print(f"No employee found for RFID ID: {rfid_id}")
+            return employee_data
     except FileNotFoundError:
         print("Employee data file not found.")
         return None
@@ -60,19 +57,52 @@ def capture_items(food_items):
         return None
     return valid_items
 
-def log_transaction(employee_data, items):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    item_names = [item['item_name'] for item in items]
-    transaction = {
-        'employee_id': employee_data.get('rfid_id', 'Unknown'),
-        'employee_name': employee_data.get('employee_name', 'Unknown'),
-        'items': item_names,
-        'timestamp': timestamp
-    }
-    print(f"Transaction Logged: {transaction}")
-    # Append to a log file
-    with open('transactions.log', 'a') as f:
-        f.write(f"{transaction}\n")
+def get_new_transaction_id():
+    filename = 'transaction_id.txt'
+    if not os.path.isfile(filename):
+        transaction_id = '0000000000'
+    else:
+        with open(filename, 'r') as f:
+            last_id = f.read().strip()
+            if last_id == '':
+                transaction_id = '0000000000'
+            else:
+                new_id = int(last_id) + 1
+                transaction_id = str(new_id).zfill(10)
+
+    # Update the transaction ID file with the new ID
+    with open(filename, 'w') as f:
+        f.write(transaction_id)
+
+    return transaction_id
+
+def log_transaction(transaction):
+    # Append the transaction to the transactions CSV file
+    filename = 'transactions.csv'
+    file_exists = os.path.isfile(filename)
+    with open(filename, mode='a', newline='') as csvfile:
+        fieldnames = ['transaction_id', 'timestamp', 'employee_id', 'employee_name', 'transaction_type', 'items', 'amount']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(transaction)
+
+def calculate_outstanding_balance(employee_id):
+    filename = 'transactions.csv'
+    if not os.path.isfile(filename):
+        return 0.0
+    total_purchases = 0.0
+    total_payments = 0.0
+    with open(filename, mode='r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if row['employee_id'] == employee_id:
+                if row['transaction_type'] == 'Purchase':
+                    total_purchases += float(row['amount'])
+                elif row['transaction_type'] == 'Payment':
+                    total_payments += float(row['amount'])
+    outstanding_balance = total_purchases - total_payments
+    return outstanding_balance
 
 def admin_menu():
     while True:
@@ -212,9 +242,12 @@ def list_all_users():
             reader = csv.DictReader(csvfile)
             employees = [row for row in reader]
             if employees:
-                headers = employees[0].keys()
-                table = [row.values() for row in employees]
-                print(tabulate(table, headers=headers, tablefmt='grid'))
+                headers = ['rfid_id', 'employee_name', 'department', 'email', 'role']
+                # If using tabulate
+                # print(tabulate(employees, headers=headers, tablefmt='grid'))
+                # If not using tabulate, use basic formatting
+                for row in employees:
+                    print(f"RFID ID: {row['rfid_id']}, Name: {row['employee_name']}, Department: {row['department']}, Email: {row['email']}, Role: {row['role']}")
             else:
                 print("No employees found.")
     except FileNotFoundError:
@@ -324,9 +357,12 @@ def list_all_food_items():
             reader = csv.DictReader(csvfile)
             food_items = [row for row in reader]
             if food_items:
-                headers = food_items[0].keys()
-                table = [row.values() for row in food_items]
-                print(tabulate(table, headers=headers, tablefmt='grid'))
+                headers = ['item_id', 'item_name', 'category', 'price']
+                # If using tabulate
+                # print(tabulate(food_items, headers=headers, tablefmt='grid'))
+                # If not using tabulate, use basic formatting
+                for row in food_items:
+                    print(f"Item ID: {row['item_id']}, Name: {row['item_name']}, Category: {row['category']}, Price: {row['price']}")
             else:
                 print("No food items found.")
     except FileNotFoundError:
@@ -336,24 +372,93 @@ def main():
     while True:
         print("\n--- Cafeteria Checkout Simulation ---")
         rfid_id = receive_rfid_data()
+        if rfid_id == '0000000000':
+            print("Exiting program.")
+            break
         employee_data = get_employee_data(rfid_id)
         if not employee_data:
             continue  # Skip if no employee is found
         if employee_data.get('role', 'user') == 'admin':
             admin_menu()
             continue
-        food_items = load_food_items()
-        if not food_items:
-            print("No food items available.")
-            continue
-        items = capture_items(food_items)
-        if items is None:
-            continue  # Restart if invalid items were entered
-        log_transaction(employee_data, items)
-        # Option to exit the loop
-        cont = input("Process another transaction? (y/n): ").lower()
-        if cont != 'y':
-            break
+
+        # Present options to the user
+        print("\nPlease select an option:")
+        print("1. Make a Purchase")
+        print("2. Settle Account")
+        option = input("Enter your choice (1 or 2): ").strip()
+        if option == '1':
+            # Make a Purchase
+            food_items = load_food_items()
+            if not food_items:
+                print("No food items available.")
+                continue
+            items = capture_items(food_items)
+            if items is None:
+                continue  # Restart if invalid items were entered
+
+            # Calculate the total cost
+            total_cost = sum(float(item['price']) for item in items)
+            item_names = [item['item_name'] for item in items]
+
+            # Generate a new transaction ID
+            transaction_id = get_new_transaction_id()
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            transaction = {
+                'transaction_id': transaction_id,
+                'timestamp': timestamp,
+                'employee_id': employee_data['rfid_id'],
+                'employee_name': employee_data['employee_name'],
+                'transaction_type': 'Purchase',
+                'items': ', '.join(item_names),
+                'amount': f"{total_cost:.2f}"
+            }
+
+            log_transaction(transaction)
+            print(f"Purchase Recorded: {transaction}")
+
+        elif option == '2':
+            # Settle Account
+            outstanding_balance = calculate_outstanding_balance(employee_data['rfid_id'])
+            print(f"Your outstanding balance is: ${outstanding_balance:.2f}")
+            if outstanding_balance <= 0:
+                print("You have no outstanding balance.")
+                continue
+            payment_input = input("Enter the amount you would like to pay: ").strip()
+            try:
+                payment_amount = float(payment_input)
+                if payment_amount <= 0:
+                    print("Payment amount must be positive.")
+                    continue
+                if payment_amount > outstanding_balance:
+                    print(f"Payment amount cannot exceed the outstanding balance of ${outstanding_balance:.2f}.")
+                    continue
+
+                # Generate a new transaction ID
+                transaction_id = get_new_transaction_id()
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                transaction = {
+                    'transaction_id': transaction_id,
+                    'timestamp': timestamp,
+                    'employee_id': employee_data['rfid_id'],
+                    'employee_name': employee_data['employee_name'],
+                    'transaction_type': 'Payment',
+                    'items': '',
+                    'amount': f"{payment_amount:.2f}"
+                }
+
+                log_transaction(transaction)
+                print(f"Payment Recorded: {transaction}")
+                new_balance = outstanding_balance - payment_amount
+                print(f"Your new outstanding balance is: ${new_balance:.2f}")
+
+            except ValueError:
+                print("Invalid payment amount. Please enter a numeric value.")
+                continue
+        else:
+            print("Invalid option selected. Please try again.")
 
 if __name__ == '__main__':
     main()
