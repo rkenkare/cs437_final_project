@@ -37,7 +37,7 @@ from utils.general import (
 )
 from utils.torch_utils import select_device, smart_inference_mode
 
-FOOD_ITEMS = {"pizza", "banana", "orange", "cookie", "yogurt", "sandwich", "burger", "cookie", "french fries", "donut", "sushi"}
+FOOD_ITEMS = {"banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake"}
 OUTPUT_FILE = "detected_foods.csv"
 
 @smart_inference_mode()

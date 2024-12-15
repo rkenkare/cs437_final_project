@@ -18,13 +18,13 @@ def start_server(host='192.168.88.191', port=12345):
     LOGGER.info("Scan your ID")
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
-    server_socket.listen(1)  # Listen for one connection
+    server_socket.listen(1)  
     
     # print(f"Server listening on {host}:{port}")
-    conn, addr = server_socket.accept()  # Accept a connection
+    conn, addr = server_socket.accept()  
     # print(f"Connection from {addr}")
     
-    data = conn.recv(1024)  # Receive up to 1024 bytes
+    data = conn.recv(1024) 
     try:
         data = data.decode('utf-8')
         print(f"User ID: {data}")
@@ -78,18 +78,16 @@ def remove_img(img_name):
     else:
         print("Folder does not exist")
 	
-# Function to read the first CSV file and get the list of items to search
 def get_items_to_search():
     # print("Get_items_search started")
     file_path = "detected_foods.csv"
     with open(file_path, mode='r') as file:
         # print("Checkpoint 1")
         csv_reader = csv.reader(file)
-        items = [row[1] for row in csv_reader]  # Assuming items are in the first column
+        items = [row[1] for row in csv_reader]
     # print("Get_items_search done")
     return items
 
-# Function to search the second CSV and get prices of the items
 def get_item_prices(items_to_search):
     # print("Get_prices started")
     file_path = "admin_data/food_items.csv"
@@ -97,18 +95,18 @@ def get_item_prices(items_to_search):
     with open(file_path, mode='r') as file:
         # print("Checkpoint 2")
         csv_reader = csv.reader(file)
-        next(csv_reader)  # Skip header if present
+        next(csv_reader)  
         for row in csv_reader:
             # print("Checkpoint 3")
-            item_name = row[1]  # Assuming item names are in the second column
-            price = row[2]     # Assuming prices are in the third column
+            item_name = row[1]  
+            price = row[2]  
             if item_name in items_to_search:
                 # print("Checkpoint 4")
                 item_prices[item_name] = price
     # print("Get_prices search")
     return item_prices
 
-# Function to write the transactions into a new CSV file
+
 def write_transactions(employee_id, item_prices):
     print("")
     print("--------------------------")
@@ -119,7 +117,7 @@ def write_transactions(employee_id, item_prices):
     with open(file_path, mode='w', newline='') as file:
         # print("Checkpoint 5")
         csv_writer = csv.writer(file)
-        csv_writer.writerow(["Time", "Employee ID", "Item Name", "Price"])  # Header row
+        csv_writer.writerow(["Time", "Employee ID", "Item Name", "Price"]) 
         for item, price in item_prices.items():
             print(f"{item} {price}")
             # print("Checkpoint 6")
