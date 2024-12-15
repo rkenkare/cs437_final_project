@@ -82,42 +82,42 @@ def run(
     screenshot = source.lower().startswith("screen")
     if is_url and is_file:
         source = check_file(source)  # download
-        LOGGER.info(f"Downloaded file from URL to {source}")
+        # LOGGER.info(f"Downloaded file from URL to {source}")
 
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / "labels" if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
-    LOGGER.info(f"Results will be saved to {save_dir}")
+    # LOGGER.info(f"Results will be saved to {save_dir}")
 
     # Load model
     device = select_device(device)
-    LOGGER.info(f"Using device: {device}")
+    # LOGGER.info(f"Using device: {device}")
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-    LOGGER.info(f"Loaded model with stride {stride}, names {names}")
+    # LOGGER.info(f"Loaded model with stride {stride}, names {names}")
 
     # Dataloader
     bs = 1  # batch_size
     if webcam:
-        LOGGER.info("Loading webcam streams")
+        # LOGGER.info("Loading webcam streams")
         view_img = check_imshow(warn=True)
         dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
         bs = len(dataset)
     elif screenshot:
-        LOGGER.info("Loading screenshots")
+        # LOGGER.info("Loading screenshots")
         dataset = LoadScreenshots(source, img_size=imgsz, stride=stride, auto=pt)
     else:
-        LOGGER.info("Loading images")
+        # LOGGER.info("Loading images")
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
     vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Run inference
-    LOGGER.info("Warming up model")
+    # LOGGER.info("Warming up model")
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(device=device), Profile(device=device), Profile(device=device))
     for path, im, im0s, vid_cap, s in dataset:
-        LOGGER.debug(f"Processing image: {path}")
+        # LOGGER.debug(f"Processing image: {path}")
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -128,7 +128,7 @@ def run(
                 ims = torch.chunk(im, im.shape[0], 0)
 
         # Inference
-        LOGGER.info("Performing inference")
+        # LOGGER.info("Performing inference")
         with dt[1]:
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
             if model.xml and im.shape[0] > 1:
@@ -141,10 +141,10 @@ def run(
                 pred = [pred, None]
             else:
                 pred = model(im, augment=augment, visualize=visualize)
-        LOGGER.debug(f"Prediction shape: {pred[0].shape if pred else 'None'}")
+        # LOGGER.debug(f"Prediction shape: {pred[0].shape if pred else 'None'}")
 
         # NMS
-        LOGGER.info("Applying Non-Max Suppression")
+        # LOGGER.info("Applying Non-Max Suppression")
         with dt[2]:
             pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
 
@@ -158,7 +158,7 @@ def run(
             else:
                 p, im0, frame = path, im0s.copy(), getattr(dataset, "frame", 0)
 
-            LOGGER.debug(f"Processing detection for path: {p}")
+            # LOGGER.debug(f"Processing detection for path: {p}")
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
             txt_path = str(save_dir / "labels" / p.stem) + ("" if dataset.mode == "image" else f"_{frame}")  # im.txt
@@ -167,7 +167,7 @@ def run(
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
-                LOGGER.info(f"Found {len(det)} detections")
+                # LOGGER.info(f"Found {len(det)} detections")
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
 
@@ -196,7 +196,7 @@ def run(
             # Stream results
             im0 = annotator.result()
             if view_img:
-                LOGGER.info("Displaying image")
+                # LOGGER.info("Displaying image")
                 if platform.system() == "Linux" and p not in windows:
                     windows.append(p)
                     cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
@@ -206,7 +206,7 @@ def run(
 
             # Save results (image with detections)
             if save_img:
-                LOGGER.info(f"Saving image to {save_path}")
+                # LOGGER.info(f"Saving image to {save_path}")
                 if dataset.mode == "image":
                     cv2.imwrite(save_path, im0)
                 else:  # 'video' or 'stream'
@@ -225,25 +225,25 @@ def run(
                     vid_writer[i].write(im0)
 
         # Log food detection results
-        LOGGER.info("Food Detection Results:")
+        # LOGGER.info("Food Detection Results:")
         for item, status in food_detection_results.items():
             LOGGER.info(f"{item}: {status}")
 
     # Print time (inference-only)
-    LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+    # LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
     # Print results
     t = tuple(x.t / seen * 1e3 for x in dt)  # speeds per image
-    LOGGER.info(f"Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}" % t)
+    # LOGGER.info(f"Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}" % t)
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ""
-        LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
+        # LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
     if update:
-        LOGGER.info("Updating model")
+        # LOGGER.info("Updating model")
         strip_optimizer(weights[0])  # update model (to fix SourceChangeWarning)
 
 def parse_opt():
-    LOGGER.info("Parsing command line arguments")
+    # LOGGER.info("Parsing command line arguments")
     parser = argparse.ArgumentParser()
     parser.add_argument("--weights", nargs="+", type=str, default=ROOT / "yolov5s.pt", help="model path or triton URL")
     parser.add_argument("--source", type=str, default=ROOT / "data/images", help="file/dir/URL/glob/screen/0(webcam)")
@@ -282,16 +282,16 @@ def parse_opt():
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
-    LOGGER.info(f"Command line arguments: {vars(opt)}")
+    # LOGGER.info(f"Command line arguments: {vars(opt)}")
     return opt
 
 def main(opt):
-    LOGGER.info("Checking requirements")
+    # LOGGER.info("Checking requirements")
     check_requirements(ROOT / "requirements.txt", exclude=("tensorboard", "thop"))
-    LOGGER.info("Starting main process")
+    # LOGGER.info("Starting main process")
     run(**vars(opt))
 
 if __name__ == "__main__":
-    LOGGER.info("Program started")
+    # LOGGER.info("Program started")
     opt = parse_opt()
     main(opt)

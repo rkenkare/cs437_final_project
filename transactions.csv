@@ -1,7 +1,0 @@
-transaction_id,timestamp,employee_id,employee_name,transaction_type,items,amount
-0000000000,2023-10-05 18:00:00,1234567890,John Doe,Purchase,"Sandwich, Soda",7.98
-0000000001,2023-10-05 18:05:00,1234567890,John Doe,Payment,,5.00
-0000000002,2023-10-05 18:10:00,2345678901,Jane Smith,Purchase,Coffee,2.49
-0000000003,2023-10-05 18:15:00,2345678901,Jane Smith,Payment,,2.49
-0000000004,2023-10-05 18:20:00,1234567890,John Doe,Purchase,Apple Pie,3.49
-0000000003,2024-11-27 17:26:01,1234567890,John Doe,Payment,,6.47
